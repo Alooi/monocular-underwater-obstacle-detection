@@ -1,16 +1,34 @@
 # Monocular Obstacle Detection for Underwater Experimental Platforms
 
+<p align="center">
+  <a href="#"><img alt="Paper" src="https://img.shields.io/badge/Paper-coming%20soon-blue"></a>
+  <a href="#code"><img alt="Code" src="https://img.shields.io/badge/Code-coming%20after%20acceptance-orange"></a>
+  <img alt="Hardware" src="https://img.shields.io/badge/Hardware-Jetson%20Orin%20Nano-<COLOR>">
+  <img alt="Cost" src="https://img.shields.io/badge/Sensing%20%2B%20compute-%3C%241%2C000-green">
+</p>
+
 **Real-time, low-cost obstacle detection and avoidance for small underwater vehicles — using a single camera and a $150 echosounder. No stereo rig, no multibeam sonar, no DVL.**
 
 <p align="center">
-  <video src="videos/opensea_rov_pipeline_60threshold.mp4" controls muted loop width="860"></video>
+  <video src="videos/opensea_rov_good_snippet.mp4" controls muted loop width="860"></video>
+  <br>
+  <em>Open-sea deployment on a BlueROV2. Left: detected obstacles overlaid on the camera feed. Middle: dense metric depth. Right: 3D obstacle locations and the avoidance direction.</em>
 </p>
-
-*Open-sea deployment on a BlueROV2. Left: detected obstacles overlaid on the camera feed. Middle: dense metric depth. Right: 3D obstacle locations and the avoidance direction.*
 
 > Code will be posted soon, after paper acceptance.
 
 ---
+
+## At a glance
+
+| | |
+|---|---|
+| **Detector** | Lightweight CNN, 2D obstacle detection at **117–128 FPS** on a Jetson Orin Nano |
+| **Depth** | Metric **Depth Anything V2 (ViT-S)**, 392×392 FP16, 220 ms/frame, asynchronous with the detector |
+| **Scale anchoring** | Single forward echosounder projected into the image — **−9.6% RMSE** on held-out FLSea locations |
+| **Output** | High-level navigation setpoints, steering toward the direction of greatest available depth |
+| **Cost** | Under **$1,000** of sensing and compute hardware |
+| **Extra sensors required** | None — no stereo rig, no multibeam sonar, no DVL |
 
 ## Why
 
@@ -22,6 +40,8 @@ This project shows that a **single forward camera fused with one forward-facing 
 
 <p align="center">
   <img src="imgs/pipeline_visual_representation.png" width="860" alt="Pipeline overview">
+  <br>
+  <em>The three pipeline stages: obstacle overlay on the camera feed, dense metric depth, and 3D obstacle localisation with the avoidance direction.</em>
 </p>
 
 1. **Detect** — a lightweight CNN runs real-time 2D obstacle detection at **117–128 FPS** on a Jetson Orin Nano.
@@ -36,70 +56,70 @@ This project shows that a **single forward camera fused with one forward-facing 
 All three pipeline stages side by side: obstacle overlay, depth estimation, and 3D obstacle localisation with avoidance direction.
 
 <p align="center">
-  <video src="videos/opensea_rov_good_snippet.mp4" controls muted loop width="860"></video>
+  <video src="videos/opensea_rov_pipeline_60threshold.mp4" controls muted loop width="860"></video>
+  <br>
+  <em>Reef wall ahead — the detector marks it, metric depth resolves it, and the pipeline commands a turn.</em>
 </p>
 
 <p align="center">
   <video src="videos/opensea_rov_with_fish.mp4" controls muted loop width="860"></video>
+  <br>
+  <em>Fish schools are correctly rejected as non-obstacles.</em>
 </p>
-
-*Fish schools are correctly rejected as non-obstacles in the second clip.*
 
 ### Towed survey vehicle
 
 Deployment-oriented tests on a compact towed vehicle built for Red Sea reef survey. The overlay panels show the annotated camera feed, metric depth, and the obstacle map.
 
+> [!NOTE]
+> The following videos are recorded from a live stream coming directly from the towed machine.
+
 <p align="center">
   <video src="videos/towed_good_run.mp4" controls muted loop width="860"></video>
+  <br>
+  <em>A clean run over the reef.</em>
 </p>
 
 <p align="center">
   <video src="videos/towed_good_until_15s.mp4" controls muted loop width="860"></video>
+  <br>
+  <em>Stable detection and avoidance up to the 15-second mark.</em>
 </p>
 
 <p align="center">
   <video src="videos/towed_obstacle_detected_operator_late.mp4" controls muted loop width="860"></video>
+  <br>
+  <em>The pipeline detects the obstacle in time for the machine to perform a maneuver — but the vehicle was in manual mode and the operator did not have enough time to react. The perception did its job.</em>
 </p>
-
-*In the last clip the system correctly identifies the obstacle — the (manual-mode) operator simply reacts too late to act on the warning. The perception did its job.*
 
 ### Simulation (BlueROV2 in Stonefish)
 
 High-fidelity simulation runs in the [Stonefish](https://github.com/patrykcieslak/stonefish) simulator, where the CNN does all the steering while the vehicle holds a constant forward velocity.
 
 <p align="center">
-  <video src="videos/sim_stairs_run_annotated.mp4" controls muted loop width="860"></video>
-</p>
-
-<p align="center">
-  <video src="videos/sim_stairs_run_2.mp4" controls muted loop width="860"></video>
-</p>
-
-<p align="center">
   <video src="videos/sim_stairs_run_3.mp4" controls muted loop width="860"></video>
+  <br>
+  <em>Staircase pool: the BlueROV2 climbs the steps while the front-camera obstacle grid tracks the terrain ahead (bottom right) and the raw metric depth runs in parallel (top right).</em>
 </p>
 
 <p align="center">
   <video src="videos/sim_long_run_excerpt.mp4" controls muted loop width="860"></video>
+  <br>
+  <em>Longer run over the staircase scene, with the avoidance grid reacting to each step as it comes into view.</em>
 </p>
 
 ## Gallery
 
 | | |
-|---|---|
+|:---:|:---:|
 | ![BlueROV2 hardware: forward camera in dome + Ping1D echosounder](imgs/fig_bluerov_annotated_v3.jpg) | ![Obstacle! Turn right — detecting another AUV](imgs/TUV_Identifying_another_AUV.png) |
-| *BlueROV2 with forward camera and Ping1D echosounder.* | *Detecting another AUV and commanding a turn.* |
-| ![Depth fine-tuning comparison](imgs/depth_finetune_comparison.png) | ![Pretrained vs fine-tuned on FLSea](imgs/flsea_comparison_2026_04_16_164121_sample2.jpg) |
-| *Underwater depth fine-tuning: pretrained vs fine-tuned.* | *Held-out FLSea location: fine-tuning recovers the obstacle.* |
-| ![Pool wall](imgs/BlueROV_Poolwall.png) | ![Reef scene, depth-finetuned model](imgs/depth-finetuned.png) |
-| *Pool trial: free-space corridor detected through the wall grid.* | *Reef scene with the depth fine-tuned model.* |
+| *BlueROV2 with forward camera and Ping1D echosounder.* | *Towed machine detecting another AUV in open sea and commanding a turn.* |
 
-**Simulation scenes** (Stonefish): reef field, approach, and vantage points, plus a staircase climb.
-
-| | | |
-|---|---|---|
-| ![Reef field](imgs/sim_reef_field.png) | ![Reef approach](imgs/sim_reef_approach.png) | ![Reef vantage](imgs/sim_reef_vantage.png) |
-| ![Staircase climb](imgs/sim_stairs_climb.png) | | |
+<p align="center">
+  <img src="imgs/BlueROV_Poolwall.png" width="600" alt="Pool trial: free-space corridor detected through the wall grid">
+  <br>
+  <em>Pool trial: free-space corridor detected through the wall grid.</em>
+</p>
 
 ## Honest limitations
 
@@ -107,6 +127,8 @@ Reflections and specular artefacts can trigger false positives — visible below
 
 <p align="center">
   <img src="imgs/reflection_false_positive.png" width="600" alt="Reflection false positive">
+  <br>
+  <em>A bright surface reflection is misclassified as an obstacle.</em>
 </p>
 
 ## Code
